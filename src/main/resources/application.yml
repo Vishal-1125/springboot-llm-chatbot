@@ -1,0 +1,52 @@
+logging:
+  level:
+    io:
+      modelcontextprotocol:
+        client: DEBUG
+        spec: DEBUG
+ 
+spring:
+  application:
+    name: chatbot
+  ai:
+    openai:
+      api-key: ${GEMINI_API_KEY}
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai
+      chat:
+        completions-path: /chat/completions
+        options:
+          model: gemini-2.0-flash-exp
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      chatServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        minimumNumberOfCalls: 5
+
+  retry:
+    instances:
+      chatServiceRetry:
+        max-attempts: 3
+        wait-duration: 2s
+        retryExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+
+  timelimiter:
+    instances:
+      chatServiceTimeLimiter:
+        timeoutDuration: 2s
+        cancel-running-future: true
+
+  ratelimiter:
+    instances:
+      chatServiceRateLimiter:
+        limitForPeriod: 5
+        limitRefreshPeriod: 10s
+        timeoutDuration: 500ms
+        
