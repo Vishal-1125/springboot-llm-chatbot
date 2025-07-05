@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.3</version> <!-- Use stable version if 3.5.3 not released/stable -->
+        <version>3.5.3</version>
         <relativePath/>
     </parent>
 
@@ -61,6 +61,11 @@
         <dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+		</dependency>
+		
+		<dependency>
+    		<groupId>org.springframework.boot</groupId>
+   		 	<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
       
     </dependencies>

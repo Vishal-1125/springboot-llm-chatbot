@@ -16,7 +16,23 @@ spring:
         completions-path: /chat/completions
         options:
           model: gemini-2.0-flash-exp
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
+chatbot:
+  prompt:
+    cache-exclude-keywords:
+      -current
+      -weather
+      -today
+      -now
+      -news
+      -time
+      -date
+      -clock
+      
 resilience4j:
   circuitbreaker:
     instances:

@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 
 import com.vishalaneja.chatbot.dto.request.ChatRequest;
 import com.vishalaneja.chatbot.dto.response.ResponseData;
+import com.vishalaneja.chatbot.service.CacheService;
 import com.vishalaneja.chatbot.service.ChatService;
+import com.vishalaneja.chatbot.util.PromptClassifier;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -24,9 +26,15 @@ public class ChatServiceImpl implements ChatService {
 
 	private final ChatClient chatClient;
 
+	private final PromptClassifier promptClassifier;
+
+	private final CacheService cacheService;
+
 	@Autowired
-	public ChatServiceImpl(ChatClient chatClient) {
+	public ChatServiceImpl(ChatClient chatClient, PromptClassifier promptClassifier, CacheService cacheService) {
 		this.chatClient = chatClient;
+		this.promptClassifier = promptClassifier;
+		this.cacheService = cacheService;
 
 	}
 
@@ -38,14 +46,27 @@ public class ChatServiceImpl implements ChatService {
 	public CompletableFuture<ResponseEntity<ResponseData<String>>> chatResponseService(ChatRequest chatRequest) {
 		return CompletableFuture.supplyAsync(() -> {
 			log.info("Processing LLM request: {}", chatRequest);
-			String response = chatClient.prompt(chatRequest.getMessage()).call().content().trim();
 
-			ResponseData<String> responseData = new ResponseData<>();
-			responseData.setData(response);
-			responseData.setMessage("Data fetched successfully");
-			responseData.setStatus("0");
+			String prompt = chatRequest.getMessage();
+			log.info("Incoming prompt: {}", prompt);
 
-			return ResponseEntity.ok(responseData);
+			boolean cacheable = promptClassifier.isCacheable(prompt);
+
+			if (cacheable) {
+				String cachedResponse = cacheService.getFromCache(prompt);
+				if (cachedResponse != null) {
+					log.info("Returning cached response for prompt: {}", prompt);
+					return ResponseEntity.ok(new ResponseData<>(cachedResponse, "Response from cache", "0"));
+				}
+			}
+			String llmResponse = chatClient.prompt(prompt).call().content();
+			log.info("Generated LLM response: {}", llmResponse);
+
+			if (cacheable) {
+				cacheService.saveToCache(prompt, llmResponse);
+			}
+
+			return ResponseEntity.ok(new ResponseData<>(llmResponse, "LLM response generated successfully", "0"));
 		});
 	}
 
