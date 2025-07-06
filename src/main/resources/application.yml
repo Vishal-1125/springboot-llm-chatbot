@@ -2,7 +2,7 @@ logging:
   level:
     root: INFO
   file:
-    name: chatbot-${env}.log
+    name: chatbot.log
     path: logs 
     
    
