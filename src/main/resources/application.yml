@@ -1,10 +1,11 @@
 logging:
   level:
-    io:
-      modelcontextprotocol:
-        client: DEBUG
-        spec: DEBUG
- 
+    root: INFO
+  file:
+    name: chatbot-${env}.log
+    path: logs 
+    
+   
 spring:
   application:
     name: chatbot
